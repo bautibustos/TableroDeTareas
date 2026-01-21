@@ -29,3 +29,5 @@ CREATE TABLE "TASKS"(
         FOREIGN KEY (user_closed) 
         REFERENCES "USERS"(id_telegram)
 );
+
+select * from USERS where id_telegram = ;
