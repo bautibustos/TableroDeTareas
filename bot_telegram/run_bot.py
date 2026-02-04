@@ -2,6 +2,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 import asyncio
 
+from bot_telegram.commands.new_task import task
 from bot_telegram.commands import register
 from bd.manage_bd import execute_query
 
@@ -12,11 +13,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=update.effective_chat.id, 
         text="Hola"
     )
-
-async def task(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(update.message.text, update.message.from_user.id)
-    await update.message.set_reaction(reaction="👍")
-
 
 
 async def run_bot(token=None):

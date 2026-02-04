@@ -1,19 +1,34 @@
 import os
 import asyncio
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
 
 
-import bot_telegram.run_bot as run_bot
 from bd.manage_bd import pool
+from bot_telegram.run_bot import run_bot
+from api.routes.tasks import router as tasks_router
 
-token_bot = os.getenv('TOKEN_BOT_TELEGRAM')
 
-async def main():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Conexión a BD
     await pool.open()
-    # El bloque finally asegura que el pool se cierre al detener el proceso
+    
+    # 2. Definir la tarea del bot
+    token = os.getenv('TOKEN_BOT_TELEGRAM')
+    # Usamos create_task para que no bloquee el inicio de la API
+    bot_task = asyncio.create_task(run_bot(token))
+    
+    yield # Aquí la API empieza a recibir peticiones
+    
+    # 3. Limpieza al apagar
+    bot_task.cancel()
     try:
-        await run_bot.run_bot(token_bot)
-    finally:
-        await pool.close()
+        await bot_task
+    except asyncio.CancelledError:
+        pass
+    await pool.close()
 
-if __name__ == '__main__':
-    asyncio.run(main())
+app = FastAPI(lifespan=lifespan)
+app.include_router(tasks_router, prefix="/api")

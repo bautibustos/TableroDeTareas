@@ -26,3 +26,4 @@ async def execute_query(query, params=None, fetch=False):
             if fetch:
                 return await cur.fetchall()
             return None
+        

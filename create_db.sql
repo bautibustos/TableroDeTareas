@@ -5,7 +5,10 @@ SET search_path TO batata, public;
 CREATE TABLE "USERS"(
     id_user SERIAL PRIMARY KEY,
     id_telegram BIGINT NOT NULL UNIQUE, -- Debe ser UNIQUE para ser referenciado
-    name_user VARCHAR(64)
+    name_user VARCHAR(64),
+    --Revserva a futuro
+    extra_info_1 TEXT,
+    extra_info_2 TEXT
 );
 
 CREATE TABLE "TASKS"(
@@ -20,6 +23,10 @@ CREATE TABLE "TASKS"(
     datetime_open TIMESTAMP,
     datetime_closed TIMESTAMP,
 
+    -- Campos reservados
+    extra_info_1 TEXT,
+    extra_info_2 TEXT,
+
     -- Definición de llaves foráneas
     CONSTRAINT fk_user_open 
         FOREIGN KEY (user_open) 
@@ -30,4 +37,6 @@ CREATE TABLE "TASKS"(
         REFERENCES "USERS"(id_telegram)
 );
 
-select * from USERS where id_telegram = ;
+select * from "TASKS";
+
+
