@@ -13,7 +13,7 @@ async def get_active_tasks():
     """
     
     results = await execute_query(query, fetch=True)
-    print(results)
+    
     # Formateamos la salida
     tasks = [
         {
