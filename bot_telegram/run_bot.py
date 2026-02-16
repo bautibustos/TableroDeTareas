@@ -17,6 +17,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def run_bot(token=None):
     print("iniciando bot")
+    # aca se cambian los comandos.
+    
     # Reemplaza 'TU_TOKEN_AQUI' por el token que te dio BotFather
     application = ApplicationBuilder().token(token).build()
     
