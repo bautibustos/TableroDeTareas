@@ -1,46 +1,54 @@
 async function loadTasks() {
-const board = document.getElementById('board');
+    try {
+        const response = await fetch('/api/tasks');
+        const tasks = await response.json();
+        console.log('Tareas cargadas:', tasks);  // Debug
+        const board = document.getElementById('board');
+        board.innerHTML = '';
 
-try {
-    const response = await fetch('/api/tasks');
-    const tasks = await response.json();
-    
-    board.innerHTML = ''; // Limpiar pizarra
+        tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            const fecha = new Date(task.fecha_creacion).toLocaleString('es-AR');
+            
+            let priorityClass = '';
+            let priorityLabel = '';
 
-    tasks.forEach(task => {
-        const card = document.createElement('div');
-        card.className = 'note-card';
-        
-        // Formatear fecha
-        const fecha = new Date(task.fecha_creacion).toLocaleString();
+            switch (task.prioridad) {
+                case 1:
+                    priorityClass = 'priority-high';
+                    priorityLabel = 'Alta';
+                    break;
+                case 2:
+                    priorityClass = 'priority-medium';
+                    priorityLabel = 'Media';
+                    break;
+                case 3:
+                    priorityClass = 'priority-low';
+                    priorityLabel = 'Baja';
+                    break;
+            }
 
-        card.innerHTML = `
-            <button class="close-btn" onclick="closeTask(${task.id_task})">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-            <div class="note-content">
-                <h3 class="note-title">ID Usuario: ${task.creador}</h3>
-                <p class="note-text">${task.descripcion}</p>
-                <div class="note-footer">
-                    Creada: ${fecha}
+
+            card.innerHTML = `
+                <div class="header">
+                    <div class="task-id">#${task.id_task}</div>
+                    <div class="badges"> 
+                        <span class="badge ${priorityClass}">
+                            <span class="dot"></span> ${priorityLabel}
+                        </span>
+                    </div>
                 </div>
-            </div>
-        `;
-        board.appendChild(card);
-    });
-} catch (error) {
-    console.error("Error cargando tareas:", error);
+                <div class="creator"><b>${task.creador}</b></div>
+                <p class="note-text">${task.descripcion}</p>
+                <p class="note-text"><b>${fecha}</b></p>
+            `;
+            board.appendChild(card);
+        });
+    } catch (e) {
+        console.error('Error:', e);
+    }
 }
 
-
-}
-
-async function closeTask(id) {
-// Aquí irá la lógica del UPDATE cuando la definamos
-console.log("Cerrando tarea:", id);
-}
-
-// Carga inicial
-loadTasks();
-// Recarga automática cada 30 segundos
 setInterval(loadTasks, 30000);
+loadTasks();

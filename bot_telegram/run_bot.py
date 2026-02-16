@@ -4,6 +4,8 @@ import asyncio
 
 from bot_telegram.commands.new_task import task
 from bot_telegram.commands import register
+from bot_telegram.commands.close_task import close
+
 from bd.manage_bd import execute_query
 
 
@@ -18,7 +20,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def run_bot(token=None):
     print("iniciando bot")
     # aca se cambian los comandos.
-    
+
     # Reemplaza 'TU_TOKEN_AQUI' por el token que te dio BotFather
     application = ApplicationBuilder().token(token).build()
     
@@ -29,6 +31,10 @@ async def run_bot(token=None):
     # Manejador para el comando /task
     task_handler = CommandHandler('task', task)
     application.add_handler(task_handler)
+
+    # Manejador para el comando /close
+    close_handler = CommandHandler('close', close)
+    application.add_handler(close_handler)
 
     # manejador de registro
 

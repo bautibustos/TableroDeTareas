@@ -16,3 +16,20 @@ async def task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.set_reaction(reaction="👍")
     
     
+
+
+
+"""
+/task PRIORIDAD "texto descripcion bla bla bla 
+/task prio 3 "texto descripcion bla bla bla
+
+/task 3 "bla bla bla bla bla"
+
+
+
+/task "tarea blalblalala"
+
+--> botones
+
+--> id del creador tarea
+"""

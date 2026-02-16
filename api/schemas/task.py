@@ -2,7 +2,8 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class TaskCreate(BaseModel):
-    creator_id: int
-    content: str
-    creation_date: datetime
+class Task(BaseModel):
+    id_task: int
+    creador: str
+    descripcion: str
+    fecha_creacion: datetime
