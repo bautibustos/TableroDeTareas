@@ -7,3 +7,4 @@ class Task(BaseModel):
     creador: str
     descripcion: str
     fecha_creacion: datetime
+    prioridad: str

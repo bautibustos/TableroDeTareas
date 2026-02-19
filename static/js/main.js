@@ -45,7 +45,8 @@ async function loadTasks() {
             `;
             board.appendChild(card);
         });
-    } catch (e) {
+    } 
+    catch (e) {
         console.error('Error:', e);
     }
 }

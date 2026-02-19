@@ -1,58 +1,62 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+import logging
 import asyncio
-
-from bot_telegram.commands.new_task import task
-from bot_telegram.commands import register
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+    ConversationHandler,
+    CallbackQueryHandler
+)
+from bot_telegram.commands.register import register
 from bot_telegram.commands.close_task import close
+from bot_telegram.commands.new_task import task_start, handle_task_content, SELECTING_PRIORITY, EXPECTING_TASK, cancel, handle_priority
 
-from bd.manage_bd import execute_query
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Pong!")
 
-
-# Función para el comando /start
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id, 
-        text="Hola"
+async def run_bot(token: str):
+    # Configuración de logs
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO
     )
 
-
-async def run_bot(token=None):
-    print("iniciando bot")
-    # aca se cambian los comandos.
-
-    # Reemplaza 'TU_TOKEN_AQUI' por el token que te dio BotFather
     application = ApplicationBuilder().token(token).build()
-    
-    # Manejador para el comando /start
-    start_handler = CommandHandler('start', start)
-    application.add_handler(start_handler)
-    
-    # Manejador para el comando /task
-    task_handler = CommandHandler('task', task)
-    application.add_handler(task_handler)
 
-    # Manejador para el comando /close
-    close_handler = CommandHandler('close', close)
-    application.add_handler(close_handler)
+    # Configuración del ConversationHandler
+    # per_user=True asegura que si alguien más escribe en el grupo, no interfiera
+    task_conv = ConversationHandler(
+        entry_points=[CommandHandler("task", task_start)],
+        states={
+            SELECTING_PRIORITY: [
+                CallbackQueryHandler(handle_priority)
+            ],
+            EXPECTING_TASK: [
+                MessageHandler(filters.TEXT & (~filters.COMMAND), handle_task_content)
+            ],
+        },
+        #  aca se puede cambiar el comando para cancelar la tarea
+        fallbacks=[CommandHandler("cancel", cancel)],
+        per_chat=True,
+        per_user=True
+    )
 
-    # manejador de registro
+    # Handlers del Bot
+    application.add_handler(CommandHandler("start", ping))
+    application.add_handler(CommandHandler("close", close))
+    application.add_handler(CommandHandler("registro", register))
+    application.add_handler(task_conv)
 
-    register_handler = CommandHandler('registro', register)
-    application.add_handler(register_handler)
+    print("Bot de Telegram iniciado y esperando comandos...", flush=True)
 
-    print("bot iniciado")
-
-    await application.initialize()
-    await application.updater.start_polling() # start_polling pertenece al updater
-    await application.start()
-
-        # Mantiene el bot corriendo hasta recibir señal de parada
-    try:
+    async with application:
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling()
+        
+        # Mantener el loop asíncrono vivo
         while True:
-            await asyncio.sleep(3600) # Mantiene el loop vivo de forma eficiente
-    finally:
-            # Asegura el cierre ordenado si se sale del while
-        await application.updater.stop()
-        await application.stop()
-        await application.shutdown()
+            await asyncio.sleep(1)

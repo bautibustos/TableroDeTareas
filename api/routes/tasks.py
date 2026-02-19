@@ -7,7 +7,7 @@ router = APIRouter()
 async def get_active_tasks():
     # Solo traemos tareas sin fecha de cierre
     query = """
-        SELECT "TASKS".id_task, "USERS".name_user, "TASKS".context_task, "TASKS".datetime_open
+        SELECT "TASKS".id_task, "USERS".name_user, "TASKS".context_task, "TASKS".datetime_open, "TASKS".priority
         FROM "TASKS"
         JOIN "USERS" ON "TASKS".user_open = "USERS".id_telegram
         WHERE "TASKS".datetime_closed IS NULL

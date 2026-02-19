@@ -26,6 +26,9 @@ CREATE TABLE "TASKS"(
     -- Campos reservados
     extra_info_1 TEXT,
     extra_info_2 TEXT,
+    
+    -- Prioridad de la tarea
+    priority INT,
 
     -- Definición de llaves foráneas
     CONSTRAINT fk_user_open 
@@ -37,6 +40,8 @@ CREATE TABLE "TASKS"(
         REFERENCES "USERS"(id_telegram)
 );
 
-select * from "TASKS";
+select * from batata."TASKS";
+
+alter table batata."TASKS" add priority int;
 
 
