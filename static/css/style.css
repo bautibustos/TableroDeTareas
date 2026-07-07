@@ -90,6 +90,13 @@ h1 {
     color: var(--text-muted);
 }
 
+.description-text{
+    font-size: 1.0rem;
+    font-weight: 400;
+    color: var(--text);
+
+}
+
 /* ===============================
    Badges
 =================================*/

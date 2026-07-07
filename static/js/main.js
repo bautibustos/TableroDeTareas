@@ -40,7 +40,7 @@ async function loadTasks() {
                     </div>
                 </div>
                 <div class="creator"><b>${task.creador}</b></div>
-                <p class="note-text">${task.descripcion}</p>
+                <p class="description-text">${task.descripcion}</p>
                 <p class="note-text"><b>${fecha}</b></p>
             `;
             board.appendChild(card);
