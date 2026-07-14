@@ -4,10 +4,10 @@ FROM python:3.12.3-slim-bookworm
 WORKDIR /app
 
 # copiar requerimientos
-COPY requirements.txt .
+COPY requeriments.txt .
 
 # ejecutar instalacion de requerimientos
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requeriments.txt
 
 # copiar proyecto
 COPY . .
