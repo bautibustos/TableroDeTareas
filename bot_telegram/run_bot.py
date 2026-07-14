@@ -31,15 +31,13 @@ async def run_bot(token: str):
     task_conv = ConversationHandler(
         entry_points=[CommandHandler("task", task_start)],
         states={
-            SELECTING_PRIORITY: [
-                CallbackQueryHandler(handle_priority)
-            ],
-            EXPECTING_TASK: [
-                MessageHandler(filters.TEXT & (~filters.COMMAND), handle_task_content)
-            ],
-        },
-        #  aca se puede cambiar el comando para cancelar la tarea
-        fallbacks=[CommandHandler("cancel", cancel)],
+        # Cuando espera la tarea, el que responde es handle_priority (que recibe texto)
+        EXPECTING_TASK: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_priority)],
+        
+        # Cuando espera la prioridad, el que responde es handle_task_content (que recibe botones/callbacks)
+        SELECTING_PRIORITY: [CallbackQueryHandler(handle_task_content)],
+    },
+    fallbacks=[CommandHandler('cancel', cancel)],
         per_chat=True,
         per_user=True
     )

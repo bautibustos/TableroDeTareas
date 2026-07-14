@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     
     # 2. Definir la tarea del bot
     token = os.getenv('TOKEN_BOT_TELEGRAM')
+    print(token)
     bot_task = asyncio.create_task(run_bot(token))
     
     yield # Aquí la API empieza a recibir peticiones
