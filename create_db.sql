@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS batata;
+CREATE SCHEMA IF NOT EXISTS test_batata;
 
-SET search_path TO batata, public;
+SET search_path TO test_batata, public;
 
 CREATE TABLE "USERS"(
     id_user SERIAL PRIMARY KEY,
@@ -40,8 +40,7 @@ CREATE TABLE "TASKS"(
         REFERENCES "USERS"(id_telegram)
 );
 
-select * from batata."TASKS";
-
-alter table batata."TASKS" add priority int;
+select * from test_batata."TASKS";
 
 
+SELECT id_task FROM test_batata."TASKS" where user_closed IS null;
