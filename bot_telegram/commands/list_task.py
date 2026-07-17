@@ -3,7 +3,8 @@ from telegram.ext import ContextTypes
 from bd.manage_bd import execute_query
 
 async def list_task_active(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.set_reaction(reaction="✍")
+    ''' Comando para listar tareas /list '''
+    #await update.message.set_reaction(reaction="")
     id_telegram = update.message.from_user.id
 
     try:
@@ -19,6 +20,7 @@ async def list_task_active(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if len(palabras) > n:
                 resumen += '...'
             return resumen
+        
         await update.message.reply_text('Tareas abiertas:\n' + '\n' + '\n'.join([f"#{task[0]} - {resumen(task[1])}" for task in tasks]))
 
     except ValueError:

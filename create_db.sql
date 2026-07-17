@@ -43,4 +43,6 @@ CREATE TABLE "TASKS"(
 select * from test_batata."TASKS";
 
 
-SELECT id_task FROM test_batata."TASKS" where user_closed IS null;
+SELECT t.context_task, t.user_open, t.datetime_open, t.priority, u.name_user FROM test_batata."TASKS" t
+                LEFT JOIN test_batata."USERS" u ON t.user_open = u.id_telegram
+                WHERE t.id_task = 3 AND t.user_closed IS null;

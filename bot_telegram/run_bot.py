@@ -14,6 +14,7 @@ from bot_telegram.commands.register import register
 from bot_telegram.commands.close_task import close
 from bot_telegram.commands.new_task import task_start, handle_task_content, SELECTING_PRIORITY, EXPECTING_TASK, cancel, handle_priority
 from bot_telegram.commands.list_task import list_task_active
+from bot_telegram.commands.tkt import detail_task
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong!")
@@ -49,6 +50,7 @@ async def run_bot(token: str):
     application.add_handler(CommandHandler("registro", register))
     application.add_handler(task_conv)
     application.add_handler(CommandHandler("list", list_task_active))
+    application.add_handler(CommandHandler("tkt", detail_task))
 
     print("Bot de Telegram iniciado y esperando comandos...", flush=True)
 
