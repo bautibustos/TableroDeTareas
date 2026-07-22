@@ -47,18 +47,23 @@ CREATE TABLE "TASKS"(
         REFERENCES "USERS"(id_telegram)
 );
 
-select * from test_batata."USERS";
-ALTER TABLE test_batata."TASKS" 
+select * from batata."USERS";
+ALTER TABLE batata."TASKS" 
 ADD COLUMN user_assigned bigint,
 ADD CONSTRAINT fk_user_assigned 
     FOREIGN KEY (user_assigned) 
     REFERENCES test_batata."USERS"(id_telegram);
 
-
-SET search_path TO test_batata;
+SET search_path TO batata;
 SELECT "TASKS".id_task, "USERS".name_user, "TASKS".context_task, "TASKS".datetime_open, "TASKS".priority, assigned_user.name_user 
         FROM "TASKS"
         JOIN "USERS" ON "TASKS".user_open = "USERS".id_telegram
         JOIN "USERS" AS assigned_user ON "TASKS".user_assigned = assigned_user.id_telegram
         WHERE "TASKS".datetime_closed IS NULL
         ORDER BY "TASKS".datetime_open ASC;
+
+
+
+UPDATE batata."TASKS" 
+SET user_assigned = 5515915265
+WHERE user_assigned IS NULL;

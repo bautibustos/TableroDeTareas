@@ -96,6 +96,13 @@ h1 {
     color: var(--text);
 
 }
+.assigned {
+    font-size: 0.9rem;
+    font-weight: 200;
+    color: var(--text);
+
+}
+
 
 /* ===============================
    Badges
