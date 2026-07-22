@@ -14,5 +14,5 @@ para la ejecucion del programa y compartir en la misma red, crear exepciones den
 
 # doker
 docker build -t mi-proyecto:1.0 .
-doker run -d --name mi-proyecto-container -p 8000:8000 --env-file .env mi-proyecto:1.0
+docker run -d --name mi-proyecto-container -p 8000:8000 --env-file .env mi-proyecto:1.0
 docker stop mi-proyecto-container && docker rm mi-proyecto-container

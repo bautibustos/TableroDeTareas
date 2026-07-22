@@ -29,6 +29,7 @@ Pygments==2.19.2
 python-dotenv==1.2.1
 python-multipart==0.0.22
 python-telegram-bot==22.5
+python-telegram-bot[job-queue]==22.5
 PyYAML==6.0.3
 rich==14.3.2
 rich-toolkit==0.18.1

@@ -1,4 +1,4 @@
-from telegram import Update,  InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -10,49 +10,33 @@ from telegram.ext import (
 )
 from bd.manage_bd import execute_query
 import datetime
+from .utils.conversation_timeout import generic_timeout_handler, make_default_choice_timeout
 
 
-
-async def task(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.set_reaction(reaction="✍")
-    mensaje = update.message.text.replace('/task ', '')
-    id_telegram = update.message.from_user.id
-    
-    date_open = datetime.datetime.now()
-    query = 'insert into "TASKS" (user_open, context_task, datetime_open) values (%s, %s, %s);'
-    params = (id_telegram, mensaje, date_open)
-    #params = (user_id, contenido, date_open)
-    await execute_query(query, params)
-    await update.message.set_reaction(reaction="👍")
-    
-    
 # Estados para la conversación
-SELECTING_PRIORITY, EXPECTING_TASK = range(2)
+SELECTING_PRIORITY, EXPECTING_TASK, ASSIGN_TASK = range(3)
+
 
 async def task_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Inicia el comando /task, pide la tarea y pasa al estado EXPECTING_TASK."""
-
+    await update.message.set_reaction(reaction="✍")
     context.user_data['task_owner'] = update.effective_user.id
-    
-    await update.message.reply_text(
-        text="¿Cuál es la tarea?",
-    )
-    # 1. CORREGIDO: Borrado el código muerto de los botones acá. 
-    # Primero pedimos el texto y pasamos al estado EXPECTING_TASK.
+
+    await update.message.reply_text(text="¿Cuál es la tarea?")
+
+    await update.message.set_reaction(reaction="👍")
     return EXPECTING_TASK
 
+
 async def handle_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Recibe el texto de la tarea, muestra los botones y pasa al estado SELECTING_PRIORITY.
-    """
     user_id = update.effective_user.id
-    
+
     if user_id != context.user_data.get('task_owner'):
         return EXPECTING_TASK
 
-    # 2. CORREGIDO: Guardamos el texto de la tarea que acaba de escribir el usuario
-    context.user_data['task_content'] = update.message.text
-    
+    contenido = update.message.text
+    context.user_data['task_content'] = contenido
+
     keyboard = [
         [
             InlineKeyboardButton("Alta 🔴", callback_data="1"),
@@ -61,72 +45,145 @@ async def handle_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text(
-        f"Hola {update.effective_user.first_name}, selecciona la prioridad de la tarea:",
+
+    sent_message = await update.message.reply_text(
+        "Selecciona la prioridad de la tarea:",
         reply_markup=reply_markup
     )
-    
-    # Pasamos al estado que espera el clic del botón
+    context.user_data['choice_message_id'] = sent_message.message_id
+    context.user_data['choice_chat_id'] = sent_message.chat_id
+
+    # Definimos QUÉ hay que guardar si se cumple el timeout: prioridad Baja por defecto
+    async def guardar_prioridad_baja(context):
+        date_open = datetime.datetime.now()
+        sql_query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s) returning id_task;'
+        params = (user_id, contenido, date_open, "3")
+        result = await execute_query(sql_query, params, fetch=True)
+        task_id = result[0][0]  # AJUSTAR según cómo devuelva tu execute_query
+
+        context.user_data['task_id'] = task_id
+        # Como acá también hace falta pedir la asignación, seguimos la cadena:
+        await assign_task(update, context)
+
+    context.user_data['on_timeout'] = make_default_choice_timeout(
+        guard_key='task_content',
+        save_fn=guardar_prioridad_baja,
+        texto_final="Tarea registrada con prioridad Baja."
+    )
+
     return SELECTING_PRIORITY
 
 
 async def handle_task_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Maneja el contenido final de la tarea."""
-
     query_cb = update.callback_query
-    await query_cb.answer() # Obligatorio responder al callback en Telegram
-    
+    await query_cb.answer()
+
     user_id = update.effective_user.id
-    
     if user_id != context.user_data.get('task_owner'):
         return SELECTING_PRIORITY
 
-    # 3. CORREGIDO: Capturamos la prioridad del botón y el contenido que guardamos antes
     prioridad = query_cb.data
     contenido = context.user_data.get('task_content')
-    
-    print(f"DEBUG: Tarea de {user_id} | Prioridad: {prioridad} | Contenido: {contenido}", flush=True)
-    
-    # --- PARA LOGICA DE BASE DE DATOS ---
+
     date_open = datetime.datetime.now()
-    sql_query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s);'
+    sql_query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s) returning id_task;'
     params = (user_id, contenido, date_open, prioridad)
-    await execute_query(sql_query, params)
-    # -----------------------------------------------
-    
-    # Editamos el mensaje de los botones para confirmar
-    await query_cb.edit_message_text(f"Tarea registrada")
-    
-    context.user_data.clear()
+    result = await execute_query(sql_query, params, fetch=True)
+    task_id = result[0][0]
+
+    context.user_data['task_id'] = task_id
+
+    await query_cb.edit_message_text("Tarea registrada, ahora asignala")
+
+    await assign_task(update, context)
+
+    # La conversación termina acá; la asignación se maneja de forma
+    # independiente (handler global + job_queue), no como parte de este ConversationHandler.
     return ConversationHandler.END
 
-    current_update = update 
-    user_id = current_update.effective_user.id
-    
-    # Validamos usuario (redundante por ConversationHandler pero seguro)
+async def assign_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Pide a quién asignar la tarea. Ya NO depende del ConversationHandler para
+    su propio timeout: usa job_queue directamente, así funciona igual sea
+    invocada desde el flujo normal o desde el timeout de prioridad.
+    """
+    query = '''
+                SELECT id_user, name_user, id_telegram
+                FROM "USERS"
+            '''
+    result = await execute_query(query, fetch=True)
+
+    keyboard = []
+    for user in result:
+        # Prefijo "assign:" para distinguir estos botones de los de prioridad
+        # cuando el handler global los reciba.
+        keyboard.append(
+            [InlineKeyboardButton(f"{user[1]}", callback_data=f"assign:{user[2]}")]
+        )
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    chat_id = update.effective_chat.id
+
+    sent_message = await context.bot.send_message(
+        chat_id=chat_id,
+        text="¿A quién va destinada la tarea? (30s, si no elijo se autoasigna a quien la creó)",
+        reply_markup=reply_markup
+    )
+
+    task_id = context.user_data.get('task_id')
+    id_telegram_creador = context.user_data.get('task_owner')
+
+    async def auto_asignar(job_context: ContextTypes.DEFAULT_TYPE):
+        """Se ejecuta vía job_queue si nadie responde en 30s, sin depender
+        de que la conversación siga formalmente activa."""
+        query = 'UPDATE "TASKS" SET user_assigned = %s WHERE id_task = %s;'
+        params = (id_telegram_creador, task_id)
+        await execute_query(query, params)
+        try:
+            await job_context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=sent_message.message_id,
+                text="Se te autoasignó la tarea."
+            )
+        except Exception:
+            await job_context.bot.send_message(chat_id, "Se te autoasignó la tarea.")
+
+    context.job_queue.run_once(
+        auto_asignar,
+        30,
+        name=f"assign_timeout_{task_id}",
+    )
+
+    # Le avisamos al generic_timeout_handler que no borre user_data si venimos
+    # de un timeout de prioridad encadenado.
+    context.user_data['keep_alive'] = True
+
+    return ASSIGN_TASK
+
+
+async def handle_assign_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query_cb = update.callback_query
+    await query_cb.answer()
+
+    user_id = update.effective_user.id
     if user_id != context.user_data.get('task_owner'):
-        return EXPECTING_TASK
+        return
 
-    contenido = current_update.message.text
-    prioridad = context.user_data.get('priority')
-    
-    print(f"DEBUG: Tarea de {user_id} | Prioridad: {prioridad} | Contenido: {contenido}", flush=True)
-    
-    # --- PARA LOGICA DE BASE DE DATOS ---
+    id_telegram_asignado = query_cb.data.split(":", 1)[1]
+    task_id = context.user_data.get('task_id')
 
-    date_open = datetime.datetime.now()
-    query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s);'
-    params = (user_id, contenido, date_open, prioridad)
+    # Cancelamos el auto-asignado, ya que contestó a tiempo
+    for job in context.job_queue.get_jobs_by_name(f"assign_timeout_{task_id}"):
+        job.schedule_removal()
+
+    query = 'UPDATE "TASKS" SET user_assigned = %s WHERE id_task = %s;'
+    params = (id_telegram_asignado, task_id)
     await execute_query(query, params)
 
-    # -----------------------------------------------
-    
-    await update.message.set_reaction(reaction="👍")
-    await current_update.message.reply_text("Tarea registrada.")
-    
+    await query_cb.edit_message_text("Tarea asignada correctamente.")
+
     context.user_data.clear()
-    return ConversationHandler.END
+
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancela el flujo."""

@@ -29,6 +29,9 @@ CREATE TABLE "TASKS"(
     
     -- Prioridad de la tarea
     priority INT,
+    
+    -- Usuario Asignado
+    user_assigned BIGINT,
 
     -- Definición de llaves foráneas
     CONSTRAINT fk_user_open 
@@ -37,12 +40,25 @@ CREATE TABLE "TASKS"(
         
     CONSTRAINT fk_user_closed 
         FOREIGN KEY (user_closed) 
+        REFERENCES "USERS"(id_telegram),
+    
+    CONSTRAINT fk_user_assigned 
+        FOREIGN KEY (user_assigned) 
         REFERENCES "USERS"(id_telegram)
 );
 
-select * from test_batata."TASKS";
+select * from test_batata."USERS";
+ALTER TABLE test_batata."TASKS" 
+ADD COLUMN user_assigned bigint,
+ADD CONSTRAINT fk_user_assigned 
+    FOREIGN KEY (user_assigned) 
+    REFERENCES test_batata."USERS"(id_telegram);
 
 
-SELECT t.context_task, t.user_open, t.datetime_open, t.priority, u.name_user FROM test_batata."TASKS" t
-                LEFT JOIN test_batata."USERS" u ON t.user_open = u.id_telegram
-                WHERE t.id_task = 3 AND t.user_closed IS null;
+SET search_path TO test_batata;
+SELECT "TASKS".id_task, "USERS".name_user, "TASKS".context_task, "TASKS".datetime_open, "TASKS".priority, assigned_user.name_user 
+        FROM "TASKS"
+        JOIN "USERS" ON "TASKS".user_open = "USERS".id_telegram
+        JOIN "USERS" AS assigned_user ON "TASKS".user_assigned = assigned_user.id_telegram
+        WHERE "TASKS".datetime_closed IS NULL
+        ORDER BY "TASKS".datetime_open ASC;

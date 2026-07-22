@@ -41,7 +41,10 @@ async function loadTasks() {
                 </div>
                 <div class="creator"><b>${task.creador}</b></div>
                 <p class="description-text">${task.descripcion}</p>
-                <p class="note-text"><b>${fecha}</b></p>
+                <div class="note-text" style="display: flex; justify-content: space-between; align-items: center;">
+                    <b>${fecha}</b>
+                    <span>${task.assign}</span>
+                </div>
             `;
             board.appendChild(card);
         });
