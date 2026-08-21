@@ -24,8 +24,8 @@ CREATE TABLE "TASKS"(
     datetime_closed TIMESTAMP,
 
     -- Campos reservados
-    extra_info_1 TEXT,
-    extra_info_2 TEXT,
+    extra_info_1 TEXT, -- Observacion de cierre, cargada por el asignado al usar /close
+    extra_info_2 TEXT, -- Reservado a futuro
     
     -- Prioridad de la tarea
     priority INT,

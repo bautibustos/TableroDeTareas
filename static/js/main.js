@@ -33,13 +33,13 @@ async function loadTasks() {
             card.innerHTML = `
                 <div class="header">
                     <div class="task-id">#${task.id_task}</div>
-                    <div class="badges"> 
+                    <div class="creator"><b>${task.creador}</b></div>
+                    <div class="badges">
                         <span class="badge ${priorityClass}">
                             <span class="dot"></span> ${priorityLabel}
                         </span>
                     </div>
                 </div>
-                <div class="creator"><b>${task.creador}</b></div>
                 <p class="description-text">${task.descripcion}</p>
                 <div class="note-text" style="display: flex; justify-content: space-between; align-items: center;">
                     <b>${fecha}</b>
