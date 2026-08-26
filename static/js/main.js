@@ -8,9 +8,8 @@ async function loadTasks() {
 
         tasks.forEach(task => {
             const card = document.createElement('div');
-            card.className = 'note-card';
             const fecha = new Date(task.fecha_creacion).toLocaleString('es-AR');
-            
+
             let priorityClass = '';
             let priorityLabel = '';
 
@@ -29,6 +28,7 @@ async function loadTasks() {
                     break;
             }
 
+            card.className = `note-card ${priorityClass}`;
 
             card.innerHTML = `
                 <div class="header">
@@ -42,7 +42,7 @@ async function loadTasks() {
                 </div>
                 <p class="description-text">${task.descripcion}</p>
                 <div class="note-text" style="display: flex; justify-content: space-between; align-items: center;">
-                    <b>${fecha}</b>
+                    <b class="date-text">${fecha}</b>
                     <span class="assigned">Asignado a: ${task.assign}</span>
                 </div>
             `;

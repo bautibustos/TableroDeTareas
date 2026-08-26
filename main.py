@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from bd.manage_bd import pool
 from bot_telegram.run_bot import run_bot
 from api.routes.tasks import router as tasks_router
+from api.routes.gallery import router as gallery_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +39,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Registro de rutas de la API
 app.include_router(tasks_router, prefix="/api")
+app.include_router(gallery_router, prefix="/api")
 
 # Ruta para la Pizarra Web
 @app.get("/", response_class=HTMLResponse)

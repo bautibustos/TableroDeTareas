@@ -2,7 +2,7 @@
    Variables modernas
 =================================*/
 :root {
-    --bg: #0f172a;
+    --bg: #6CAEE5;
     --card: #1e293b;
     --border: #334155;
     --text: #f1f5f9;
@@ -17,7 +17,12 @@
 body {
     margin: 0;
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
+    background-color: var(--bg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    transition: background-image 0.5s ease-in-out;
     padding: 3rem 2rem;
     color: var(--text);
 }
@@ -97,9 +102,12 @@ h1 {
 }
 .assigned {
     font-size: 0.9rem;
-    font-weight: 200;
+    font-weight: bold;
     color: var(--text);
 
+}
+.date-text {
+    color: #ffffff;
 }
 
 
@@ -124,24 +132,41 @@ h1 {
 
 /* Alta */
 .priority-high {
-    background: rgba(239,68,68,0.15);
-    color: var(--high);
+    background: rgba(254,226,226,0.9);
+    color: rgba(239,68,68,0.85);
 }
 .priority-high .dot { background: var(--high); }
 
 /* Media */
 .priority-medium {
-    background: rgba(245,158,11,0.15);
-    color: var(--medium);
+    background: rgba(254,243,199,0.9);
+    color: rgba(245,158,11,0.85);
 }
 .priority-medium .dot { background: var(--medium); }
 
 /* Baja */
 .priority-low {
-    background: rgba(34,197,94,0.15);
-    color: var(--low);
+    background: rgba(220,252,231,0.9);
+    color: rgba(34,197,94,0.85);
 }
 .priority-low .dot { background: var(--low); }
+
+/* Tarjetas teñidas con el color de su prioridad.
+   color: var(--text) evita que el color del badge (heredado por la misma
+   clase) se filtre al texto interno de la tarjeta. */
+.note-card.priority-high {
+    background: rgba(239,68,68,0.8);
+    color: var(--text);
+}
+.note-card.priority-medium {
+    background: rgba(245,158,11,0.8);
+    color: var(--text);
+}
+.note-card.priority-low {
+    background: rgba(34,197,94,0.8);
+    color: var(--text);
+}
+
 .form-container input,
 .form-container textarea,
 .form-container select {
