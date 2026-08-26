@@ -1,6 +1,33 @@
+const REFRESH_SECONDS = 30;
+const FETCH_TIMEOUT_MS = 10000;
+let secondsUntilRefresh = REFRESH_SECONDS;
+let backendDown = false;
+
+function renderUpdateCounter() {
+    const counterEl = document.getElementById('update-counter');
+    if (!counterEl) return;
+
+    if (backendDown) {
+        counterEl.textContent = '⚠ Sistema caído: sin respuesta del servidor';
+        counterEl.classList.add('update-counter-error');
+    } else {
+        counterEl.textContent = `Actualiza en ${secondsUntilRefresh}s`;
+        counterEl.classList.remove('update-counter-error');
+    }
+}
+
+function tickUpdateCounter() {
+    if (backendDown) return; // congelado hasta que vuelva a responder
+    secondsUntilRefresh = Math.max(0, secondsUntilRefresh - 1);
+    renderUpdateCounter();
+}
+
 async function loadTasks() {
     try {
-        const response = await fetch('/api/tasks');
+        const response = await fetch('/api/tasks', { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         const tasks = await response.json();
         console.log('Tareas cargadas:', tasks);  // Debug
         const board = document.getElementById('board');
@@ -48,11 +75,18 @@ async function loadTasks() {
             `;
             board.appendChild(card);
         });
-    } 
+        backendDown = false;
+    }
     catch (e) {
         console.error('Error:', e);
+        backendDown = true;
+    }
+    finally {
+        secondsUntilRefresh = REFRESH_SECONDS;
+        renderUpdateCounter();
     }
 }
 
-setInterval(loadTasks, 30000);
+setInterval(loadTasks, REFRESH_SECONDS * 1000);
+setInterval(tickUpdateCounter, 1000);
 loadTasks();
