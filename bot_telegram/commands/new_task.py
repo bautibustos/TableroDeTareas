@@ -12,6 +12,9 @@ from bd.manage_bd import execute_query
 from bd.timezone_utils import now_ar
 from psycopg.errors import ForeignKeyViolation
 from .utils.conversation_timeout import generic_timeout_handler, make_default_choice_timeout
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Estados para la conversación
@@ -142,6 +145,10 @@ async def assign_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await execute_query(query, params)
         except ForeignKeyViolation:
+            logger.error(
+                "FK violation al autoasignar: task_id=%r id_telegram_creador=%r",
+                task_id, id_telegram_creador
+            )
             texto = "No se pudo autoasignar: registrate con /registro e intentá de nuevo."
         else:
             texto = "Se te autoasignó la tarea."
@@ -188,6 +195,10 @@ async def handle_assign_selection(update: Update, context: ContextTypes.DEFAULT_
     try:
         await execute_query(query, params)
     except ForeignKeyViolation:
+        logger.error(
+            "FK violation al asignar: task_id=%r id_telegram_asignado=%r callback_data=%r user_id=%r",
+            task_id, id_telegram_asignado, query_cb.data, user_id
+        )
         await query_cb.edit_message_text(
             "No se pudo asignar: ese usuario ya no está registrado. Probá de nuevo con /task."
         )
