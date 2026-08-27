@@ -1,5 +1,6 @@
 import os
 import asyncio
+from psycopg import sql
 from psycopg_pool import AsyncConnectionPool
 
 # --- CONFIGURACIÓN DE CONEXIÓN USANDO OS.GETENV ---
@@ -11,6 +12,11 @@ CONN_INFO = (
     f"port={os.getenv('db_port')}"
 )
 
+# Schema de Postgres a usar: viene de env, sin default, para forzar que cada
+# entorno (dev/producción) lo elija explícitamente y no se mezclen datos de
+# prueba con datos reales (ver CLAUDE.md).
+DB_SCHEMA = os.getenv('db_schema')
+
 # Creamos el pool global
 pool = AsyncConnectionPool(conninfo=CONN_INFO, open=False)
 
@@ -20,9 +26,11 @@ async def execute_query(query, params=None, fetch=False):
     """
     async with pool.connection() as conn:
         async with conn.cursor() as cur:
-            await cur.execute("SET search_path TO test_batata, public;")
+            await cur.execute(
+                sql.SQL("SET search_path TO {}, public;").format(sql.Identifier(DB_SCHEMA))
+            )
             await cur.execute(query, params)
-            
+
             if fetch:
                 return await cur.fetchall()
             return None
