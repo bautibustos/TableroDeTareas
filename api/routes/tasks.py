@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from bd.manage_bd import execute_query
+from bd.timezone_utils import localize_ar
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ async def get_active_tasks():
             "id_task": row[0],
             "creador": row[1],      # Ahora es name_user
             "descripcion": row[2],
-            "fecha_creacion": row[3],
+            "fecha_creacion": localize_ar(row[3]),
             "prioridad": row[4],
             "assign": row[5]
         } 

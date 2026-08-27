@@ -1,8 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes, ConversationHandler
 from bd.manage_bd import execute_query
-
-import datetime
+from bd.timezone_utils import now_ar
 
 # Estado para la conversación de cierre
 EXPECTING_OBSERVATION = 0
@@ -64,7 +63,7 @@ async def close_finish(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     id_task = context.user_data.get('close_task_id')
     observacion = update.message.text
-    date_close = datetime.datetime.now()
+    date_close = now_ar()
 
     query = '''
         UPDATE "TASKS" SET user_closed = %s,
@@ -92,7 +91,7 @@ async def close_timeout(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
         return ConversationHandler.END
 
-    date_close = datetime.datetime.now()
+    date_close = now_ar()
     query = '''
         UPDATE "TASKS" SET user_closed = %s,
         datetime_closed = %s

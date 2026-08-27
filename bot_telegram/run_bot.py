@@ -34,6 +34,20 @@ async def configurar_menu(application: Application):
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Pong!")
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    """Handler global: evita que una excepción no capturada deje al usuario
+    sin respuesta y sin registro más allá del log crudo de la librería."""
+    logging.getLogger(__name__).error("Excepción no manejada", exc_info=context.error)
+
+    if isinstance(update, Update) and update.effective_chat:
+        try:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Ocurrió un error inesperado. Probá de nuevo en un momento."
+            )
+        except Exception:
+            pass
+
 async def run_bot(token: str):
     # Configuración de logs
     logging.basicConfig(
@@ -85,7 +99,8 @@ async def run_bot(token: str):
     application.add_handler(CallbackQueryHandler(handle_assign_selection, pattern=r"^assign:"))
     application.add_handler(CommandHandler("list", list_task_active))
     application.add_handler(CommandHandler("tkt", detail_task))
-    
+    application.add_error_handler(error_handler)
+
     print("Bot de Telegram iniciado y esperando comandos...", flush=True)
 
     async with application:

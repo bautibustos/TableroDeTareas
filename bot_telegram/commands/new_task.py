@@ -9,7 +9,8 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from bd.manage_bd import execute_query
-import datetime
+from bd.timezone_utils import now_ar
+from psycopg.errors import ForeignKeyViolation
 from .utils.conversation_timeout import generic_timeout_handler, make_default_choice_timeout
 
 
@@ -55,7 +56,7 @@ async def handle_priority(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Definimos QUÉ hay que guardar si se cumple el timeout: prioridad Baja por defecto
     async def guardar_prioridad_baja(context):
-        date_open = datetime.datetime.now()
+        date_open = now_ar()
         sql_query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s) returning id_task;'
         params = (user_id, contenido, date_open, "3")
         result = await execute_query(sql_query, params, fetch=True)
@@ -85,7 +86,7 @@ async def handle_task_content(update: Update, context: ContextTypes.DEFAULT_TYPE
     prioridad = query_cb.data
     contenido = context.user_data.get('task_content')
 
-    date_open = datetime.datetime.now()
+    date_open = now_ar()
     sql_query = 'insert into "TASKS" (user_open, context_task, datetime_open, priority) values (%s, %s, %s, %s) returning id_task;'
     params = (user_id, contenido, date_open, prioridad)
     result = await execute_query(sql_query, params, fetch=True)
@@ -138,15 +139,21 @@ async def assign_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
         de que la conversación siga formalmente activa."""
         query = 'UPDATE "TASKS" SET user_assigned = %s WHERE id_task = %s;'
         params = (id_telegram_creador, task_id)
-        await execute_query(query, params)
+        try:
+            await execute_query(query, params)
+        except ForeignKeyViolation:
+            texto = "No se pudo autoasignar: registrate con /registro e intentá de nuevo."
+        else:
+            texto = "Se te autoasignó la tarea."
+
         try:
             await job_context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=sent_message.message_id,
-                text="Se te autoasignó la tarea."
+                text=texto
             )
         except Exception:
-            await job_context.bot.send_message(chat_id, "Se te autoasignó la tarea.")
+            await job_context.bot.send_message(chat_id, texto)
 
     context.job_queue.run_once(
         auto_asignar,
@@ -178,9 +185,14 @@ async def handle_assign_selection(update: Update, context: ContextTypes.DEFAULT_
 
     query = 'UPDATE "TASKS" SET user_assigned = %s WHERE id_task = %s;'
     params = (id_telegram_asignado, task_id)
-    await execute_query(query, params)
-
-    await query_cb.edit_message_text("Tarea asignada correctamente.")
+    try:
+        await execute_query(query, params)
+    except ForeignKeyViolation:
+        await query_cb.edit_message_text(
+            "No se pudo asignar: ese usuario ya no está registrado. Probá de nuevo con /task."
+        )
+    else:
+        await query_cb.edit_message_text("Tarea asignada correctamente.")
 
     context.user_data.clear()
 
